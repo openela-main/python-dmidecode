@@ -1,0 +1,59 @@
+From 5643ecc7530489bf0875c4fe96031671b3cda435 Mon Sep 17 00:00:00 2001
+From: Lichen Liu <lichliu@redhat.com>
+Date: Fri, 17 Feb 2023 11:09:05 +0800
+Subject: [PATCH] Fix wrong DMI structures count
+
+SMBIOS v3 64-bit entry points do not announce a structures count,
+and only indicate a maximum size for the table.
+
+Remove debug log.
+
+Signed-off-by: Lichen Liu <lichliu@redhat.com>
+---
+ src/dmidecode.c | 10 +++++++---
+ src/efi.c       |  4 ----
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/src/dmidecode.c b/src/dmidecode.c
+index d1a10c1..a013c53 100644
+--- a/src/dmidecode.c
++++ b/src/dmidecode.c
+@@ -6241,13 +6241,17 @@ static void dmi_table(Log_t *logp, int type, u32 base, u32 len, u16 num, u32 ver
+                 dmixml_AddAttribute(handle_n, "type", "%i", type);
+                 dmixml_AddAttribute(handle_n, "notfound", "1");
+         }
+-
+-        if(i != num) {
++	/*
++	 * SMBIOS v3 64-bit entry points do not announce a structures count,
++	 * and only indicate a maximum size for the table.
++	 */
++        if(num && i != num) {
+                 log_append(logp, LOGFL_NODUPS, LOG_WARNING,
+                            "Wrong DMI structures count: %d announced, only %d decoded.", num, i);
+         }
+ 
+-        if(data - buf != len) {
++        if((unsigned long)(data - buf) > len
++		 || (num && (unsigned long)(data - buf) < len)) {
+                 log_append(logp, LOGFL_NODUPS, LOG_WARNING,
+                         "Wrong DMI structures length: %d bytes announced, structures occupy %d bytes.",
+                         len, (unsigned int)(data - buf));
+diff --git a/src/efi.c b/src/efi.c
+index e519257..362e2f9 100644
+--- a/src/efi.c
++++ b/src/efi.c
+@@ -83,10 +83,6 @@ int address_from_efi(Log_t *logp, size_t * address)
+                 log_append(logp, LOGFL_NODUPS, LOG_WARNING, "%s: SMBIOS entry point missing", filename);
+         }
+ 
+-        if(ret == 0){
+-                log_append(logp, LOGFL_NODUPS, LOG_DEBUG, "%s: entry point at 0x%08llx", eptype, (unsigned long long)*address);
+-        }
+-
+         return ret;
+ }
+ 
+-- 
+2.39.1
+

@@ -1,0 +1,26 @@
+From c217e2bd9dfbd23c04dac19759a2d59845fcd6f6 Mon Sep 17 00:00:00 2001
+From: Lichen Liu <lichliu@redhat.com>
+Date: Mon, 6 Feb 2023 14:46:47 +0800
+Subject: [PATCH] Fix dmi_cache_size_2 will add unit twice.
+
+Signed-off-by: Lichen Liu <lichliu@redhat.com>
+---
+ src/dmidecode.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/src/dmidecode.c b/src/dmidecode.c
+index d1a10c1..d40f0ee 100644
+--- a/src/dmidecode.c
++++ b/src/dmidecode.c
+@@ -1843,8 +1843,6 @@ void dmi_cache_size_2(xmlNode *node, const char *tagname, u32 code)
+                 size.l = code << 6;
+                 size.h = code >> 26;
+         } else {
+-                dmixml_AddAttribute(caches_n, "unit", "KB");
+-                dmixml_AddTextContent(caches_n, "%i", code);
+                 size.l = code;
+                 size.h = 0;
+         }
+-- 
+2.39.1
+
